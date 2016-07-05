@@ -1090,12 +1090,17 @@ class MySQLCursorPrepared(MySQLCursor):
         if type(params) == dict:
             query_replacement_keys = re.findall(RE_SQL_PYTHON_CAPTURE_PARAM_NAME, operation)
             operation = re.sub(RE_SQL_PYTHON_REPLACE_PARAM, '?', operation)
-            if len(params) != len(query_replacement_keys):
+
+            if set(query_replacement_keys) != len(params):
                 raise errors.ProgrammingError(
                         "Not all parameters were used in the SQL statement")
 
             #Replace params dict with params tuple in correct order.
-            params = tuple([ params[key] for key in query_replacement_keys])
+            try:
+                params = tuple([ params[key] for key in query_replacement_keys])
+            except KeyError:
+                raise errors.ProgrammingError(
+                        "Not all parameters were used in the SQL statement")
 
         if operation is not self._executed:
             if self._prepared:
